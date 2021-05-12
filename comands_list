@@ -1,0 +1,49 @@
+sudo -i
+
+yum install -y {jnet,h,io,if}top iptraf nmon
+
+useradd --no-create-home --shell /usr/sbin/nologin prometheus
+useradd --no-create-home --shell /bin/false node_exporter
+
+mkdir {/etc/,/var/lib/,~/}prometheus
+
+chown prometheus:prometheus {/etc/,/var/lib/}prometheus
+
+ls -ld {/etc/,/var/lib/}prometheus
+
+cd ~/prometheus
+
+curl -LO https://github.com/prometheus/node_exporter/releases/download/v1.1.2/node_exporter-1.1.2.linux-amd64.tar.gz
+
+tar xzvf node_exporter-*.t*gz
+
+cp node_exporter-*.linux-amd64/node_exporter /usr/local/bin
+
+chown node_exporter: /usr/local/bin/node_exporter
+
+vim /etc/systemd/system/node_exporter.service
+
+systemctl daemon-reload
+systemctl start node_exporter
+systemctl status node_exporter
+systemctl enable node_exporter
+
+curl -LO https://github.com/prometheus/prometheus/releases/download/v2.26.0/prometheus-2.26.0.linux-amd64.tar.gz
+tar xvfz prometheus-*.t*gz
+
+cp -vi prometheus-*.linux-amd64/prom{etheus,tool} /usr/local/bin
+cp -rvi prometheus-*.linux-amd64/{console{_libraries,s},prometheus.yml} /etc/prometheus/
+
+chown -Rv prometheus: /usr/local/bin/prom{etheus,tool} /etc/prometheus/
+
+vim /etc/prometheus/prometheus.yml
+
+sudo -u prometheus /usr/local/bin/prometheus --config.file /etc/prometheus/prometheus.yml --storage.tsdb.path /var/lib/prometheus/ --web.console.templates=/etc/prometheus/consoles --web.console.libraries=/etc/prometheus/console_libraries
+
+vim /etc/systemd/system/prometheus.service
+
+curl -LO https://dl.grafana.com/oss/release/grafana_7.5.6_amd64.deb && yum install ./grafana_7.5.6_amd64.deb
+
+systemctl daemon-reload && systemctl start grafana-server && systemctl status grafana-server
+systemctl enable grafana-server.service
+
